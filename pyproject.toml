@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mcp-qiskit"
-version = "0.1.0"
+version = "0.1.1"
 description = "MCP server exposing Qiskit 2.3.1 quantum computing functionality"
 readme = "README.md"
 requires-python = ">=3.11"
