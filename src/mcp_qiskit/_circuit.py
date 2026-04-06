@@ -169,6 +169,14 @@ def _get_gate_class(gate_name: str) -> type | None:
         "swap": "SwapGate",
         "i": "IGate",
         "id": "IGate",
+        "rx": "RXGate",
+        "ry": "RYGate",
+        "rz": "RZGate",
+        "u1": "U1Gate",
+        "u2": "U2Gate",
+        "u3": "U3Gate",
+        "p": "PhaseGate",
+        "cp": "CPhaseGate",
     }
 
     if gate_name in gate_mappings:

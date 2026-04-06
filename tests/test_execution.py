@@ -30,6 +30,45 @@ class TestRunCircuit:
         assert result["status"] == "COMPLETED"
         assert "statevector" in result
 
+    def test_run_circuit_qasm_simulator(self) -> None:
+        """Test running circuit on QASM simulator."""
+        circuit = create_quantum_circuit(2, 2)
+        circuit = add_gate(circuit, "h", [0])
+        circuit = add_measurement(circuit, [0, 1])
+
+        result = run_circuit(circuit, "qasm_simulator", shots=100)
+        assert result["status"] == "COMPLETED"
+        assert "counts" in result
+
+    def test_run_circuit_with_seed(self) -> None:
+        """Test running circuit with seed."""
+        circuit = create_quantum_circuit(2, 2)
+        circuit = add_gate(circuit, "h", [0])
+        circuit = add_measurement(circuit, [0, 1])
+
+        result = run_circuit(circuit, shots=100, seed=42)
+        assert result["status"] == "COMPLETED"
+        assert result["seed"] == 42
+
+    def test_run_circuit_default_backend(self) -> None:
+        """Test running circuit with default backend."""
+        circuit = create_quantum_circuit(2, 2)
+        circuit = add_gate(circuit, "h", [0])
+        circuit = add_measurement(circuit, [0, 1])
+
+        result = run_circuit(circuit, shots=100)
+        assert result["status"] == "COMPLETED"
+
+    def test_run_circuit_returns_time(self) -> None:
+        """Test that execution returns time taken."""
+        circuit = create_quantum_circuit(2, 2)
+        circuit = add_gate(circuit, "h", [0])
+        circuit = add_measurement(circuit, [0, 1])
+
+        result = run_circuit(circuit, shots=100)
+        assert "time_taken" in result
+        assert result["time_taken"] > 0
+
 
 class TestRunCircuits:
     """Tests for run_circuits function."""
@@ -60,6 +99,33 @@ class TestRunCircuits:
             assert r["status"] == "COMPLETED"
             assert "counts" in r
 
+    def test_run_circuits_statevector(self) -> None:
+        """Test running multiple circuits with statevector."""
+        circuits = []
+        for _ in range(2):
+            c = create_quantum_circuit(2, 0)
+            c = add_gate(c, "h", [0])
+            circuits.append(c)
+
+        results = run_circuits(circuits, shots=None)
+        assert len(results) == 2
+        for r in results:
+            assert "statevector" in r
+
+    def test_run_circuits_returns_metadata(self) -> None:
+        """Test that batch execution returns metadata."""
+        circuits = []
+        for _ in range(2):
+            c = create_quantum_circuit(2, 2)
+            c = add_gate(c, "h", [0])
+            c = add_measurement(c, [0, 1])
+            circuits.append(c)
+
+        results = run_circuits(circuits, shots=100)
+        for r in results:
+            assert "backend" in r
+            assert "shots" in r
+
 
 class TestTranspileCircuit:
     """Tests for transpile_circuit function."""
@@ -80,4 +146,29 @@ class TestTranspileCircuit:
         circuit = add_gate(circuit, "h", [1])
 
         result = transpile_circuit(circuit, optimization_level=2)
+        assert "operations" in result
+
+    def test_transpile_circuit_level_0(self) -> None:
+        """Test transpiling with optimization level 0."""
+        circuit = create_quantum_circuit(2, 0)
+        circuit = add_gate(circuit, "h", [0])
+
+        result = transpile_circuit(circuit, optimization_level=0)
+        assert "operations" in result
+
+    def test_transpile_circuit_level_3(self) -> None:
+        """Test transpiling with optimization level 3."""
+        circuit = create_quantum_circuit(2, 0)
+        circuit = add_gate(circuit, "h", [0])
+
+        result = transpile_circuit(circuit, optimization_level=3)
+        assert "operations" in result
+
+    def test_transpile_circuit_with_basis_gates(self) -> None:
+        """Test transpiling with custom basis gates."""
+        circuit = create_quantum_circuit(2, 0)
+        circuit = add_gate(circuit, "h", [0])
+        circuit = add_gate(circuit, "cx", [0, 1])
+
+        result = transpile_circuit(circuit, basis_gates=["h", "cx", "x", "y", "z"])
         assert "operations" in result
