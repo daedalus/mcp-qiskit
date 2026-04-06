@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "mcp-qiskit": {
+      "command": "mcp-qiskit",
+      "env": {}
+    }
+  }
+}

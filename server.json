@@ -1,0 +1,20 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.daedalus/mcp-qiskit",
+  "description": "MCP server exposing Qiskit 2.3.1 quantum computing functionality",
+  "repository": {
+    "url": "https://github.com/daedalus/mcp-qiskit",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "mcp-qiskit",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}
