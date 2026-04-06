@@ -194,8 +194,8 @@ def _get_gate_class(gate_name: str) -> type | None:
         # Toffoli gates
         "ccx": "CCXGate",
         "toffoli": "CCXGate",
-        "c3x": "CC3XGate",
-        "c3sx": "CC3SXGate",
+        "c3x": "C3XGate",
+        "c3sx": "C3SXGate",
         "c4x": "C4XGate",
         # Specialized gates
         "rccx": "RCCXGate",

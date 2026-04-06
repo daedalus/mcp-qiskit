@@ -30,6 +30,27 @@ class TestRunCircuit:
         assert result["status"] == "COMPLETED"
         assert "statevector" in result
 
+    def test_run_circuit_no_measurement_returns_statevector(self) -> None:
+        """Test that circuit without measurement returns statevector."""
+        circuit = create_quantum_circuit(2, 2)
+        circuit = add_gate(circuit, "h", [0])
+        # No measurement added
+
+        result = run_circuit(circuit, shots=100)
+        assert result["status"] == "COMPLETED"
+        assert "statevector" in result
+
+    def test_run_circuit_with_mcx(self) -> None:
+        """Test running circuit with MCX gate."""
+        circuit = create_quantum_circuit(3, 2)
+        circuit = add_gate(circuit, "h", [0])
+        circuit = add_gate(circuit, "mcx", [0, 1, 2])
+        circuit = add_measurement(circuit, [0, 1])
+
+        result = run_circuit(circuit, "aer_simulator", shots=100)
+        assert result["status"] == "COMPLETED"
+        assert "counts" in result
+
     def test_run_circuit_qasm_simulator(self) -> None:
         """Test running circuit on QASM simulator."""
         circuit = create_quantum_circuit(2, 2)
@@ -68,6 +89,19 @@ class TestRunCircuit:
         result = run_circuit(circuit, shots=100)
         assert "time_taken" in result
         assert result["time_taken"] > 0
+
+    def test_run_circuit_bell_state(self) -> None:
+        """Test running Bell state circuit."""
+        circuit = create_quantum_circuit(2, 2)
+        circuit = add_gate(circuit, "h", [0])
+        circuit = add_gate(circuit, "cx", [0, 1])
+        circuit = add_measurement(circuit, [0, 1])
+
+        result = run_circuit(circuit, shots=100)
+        assert result["status"] == "COMPLETED"
+        counts = result["counts"]
+        # Bell state should have roughly equal |00> and |11>
+        assert "00" in counts or "11" in counts
 
 
 class TestRunCircuits:

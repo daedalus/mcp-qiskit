@@ -159,6 +159,120 @@ class TestAddGate:
         assert "operations" in result
 
 
+class TestAddMCXGate:
+    """Tests for MCX (multi-controlled X) gate."""
+
+    def test_add_mcx_2_controls(self) -> None:
+        """Test adding MCX with 2 control qubits."""
+        circuit = create_quantum_circuit(3, 0)
+        result = add_gate(circuit, "mcx", [0, 1, 2])
+        assert len(result["operations"]) == 1
+
+    def test_add_mcx_3_controls(self) -> None:
+        """Test adding MCX with 3 control qubits."""
+        circuit = create_quantum_circuit(5, 0)
+        result = add_gate(circuit, "mcx", [0, 1, 2, 3, 4])
+        assert len(result["operations"]) == 1
+
+    def test_add_mct_alias(self) -> None:
+        """Test MCT alias for MCX."""
+        circuit = create_quantum_circuit(3, 0)
+        result = add_gate(circuit, "mct", [0, 1, 2])
+        assert len(result["operations"]) == 1
+
+    def test_add_mcx_single_qubit_fails(self) -> None:
+        """Test MCX fails with only 1 qubit."""
+        circuit = create_quantum_circuit(2, 0)
+        with pytest.raises(ValueError, match="MCX requires at least 2"):
+            add_gate(circuit, "mcx", [0])
+
+
+class TestAddToffoliGates:
+    """Tests for Toffoli and related gates."""
+
+    def test_add_ccx(self) -> None:
+        """Test adding CCX (Toffoli) gate."""
+        circuit = create_quantum_circuit(3, 0)
+        result = add_gate(circuit, "ccx", [0, 1, 2])
+        assert len(result["operations"]) == 1
+
+    def test_add_toffoli(self) -> None:
+        """Test adding toffoli gate (alias for ccx)."""
+        circuit = create_quantum_circuit(3, 0)
+        result = add_gate(circuit, "toffoli", [0, 1, 2])
+        assert len(result["operations"]) == 1
+
+    def test_add_c3x(self) -> None:
+        """Test adding C3X gate."""
+        circuit = create_quantum_circuit(4, 0)
+        result = add_gate(circuit, "c3x", [0, 1, 2, 3])
+        assert len(result["operations"]) == 1
+
+
+class TestAddSpecializedGates:
+    """Tests for specialized gates (rxx, ch, cu, etc.)."""
+
+    def test_add_rxx(self) -> None:
+        """Test adding RXX gate."""
+        circuit = create_quantum_circuit(2, 0)
+        result = add_gate(circuit, "rxx", [0, 1], [0.5])
+        assert len(result["operations"]) == 1
+
+    def test_add_ryy(self) -> None:
+        """Test adding RYY gate."""
+        circuit = create_quantum_circuit(2, 0)
+        result = add_gate(circuit, "ryy", [0, 1], [0.5])
+        assert len(result["operations"]) == 1
+
+    def test_add_rzz(self) -> None:
+        """Test adding RZZ gate."""
+        circuit = create_quantum_circuit(2, 0)
+        result = add_gate(circuit, "rzz", [0, 1], [0.5])
+        assert len(result["operations"]) == 1
+
+    def test_add_ch(self) -> None:
+        """Test adding CH (controlled-Hadamard) gate."""
+        circuit = create_quantum_circuit(2, 0)
+        result = add_gate(circuit, "ch", [0, 1])
+        assert len(result["operations"]) == 1
+
+    def test_add_cswap(self) -> None:
+        """Test adding CSWAP gate."""
+        circuit = create_quantum_circuit(3, 0)
+        result = add_gate(circuit, "cswap", [0, 1, 2])
+        assert len(result["operations"]) == 1
+
+    def test_add_swap(self) -> None:
+        """Test adding SWAP gate."""
+        circuit = create_quantum_circuit(2, 0)
+        result = add_gate(circuit, "swap", [0, 1])
+        assert len(result["operations"]) == 1
+
+
+class TestListAvailableGatesNew:
+    """Tests for new gates in list_available_gates."""
+
+    def test_list_mcx_gates(self) -> None:
+        """Test MCX gates are listed."""
+        gates = list_available_gates()
+        assert "mcx" in gates
+        assert "mct" in gates
+        assert "mcp" in gates
+
+    def test_list_toffoli_gates(self) -> None:
+        """Test Toffoli gates are listed."""
+        gates = list_available_gates()
+        assert "ccx" in gates
+        assert "toffoli" in gates
+
+    def test_list_c3x_gates(self) -> None:
+        """Test C3X gates are listed."""
+        gates = list_available_gates()
+        assert "c3x" in gates
+        assert "c3sx" in gates
+        assert "c4x" in gates
+
+
 class TestAddMeasurement:
     """Tests for add_measurement function."""
 
