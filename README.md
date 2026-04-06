@@ -486,6 +486,75 @@ pre-commit install
 
 ## Troubleshooting
 
+### API Keys and Credentials
+
+This package supports two types of backends:
+
+1. **Aer Simulator** (default) - Runs locally, no API key required
+2. **IBM Quantum** - Requires an IBM Quantum API token
+
+#### Using IBM Quantum Backends
+
+To use IBM Quantum backends, you need to provide your API token:
+
+**Option 1: Environment Variable**
+
+```bash
+export IBM_QUANTUM_TOKEN="your_api_token_here"
+```
+
+Or in your Python code:
+
+```python
+import os
+os.environ["IBM_QUANTUM_TOKEN"] = "your_api_token_here"
+```
+
+**Option 2: Save Credentials via Qiskit**
+
+```python
+from qiskit_ibm_provider import IBMProvider
+
+# Save your account (only needs to be done once)
+IBMProvider.save_account(token="your_api_token_here", overwrite=True)
+
+# Now you can use IBM backends
+from mcp_qiskit._backend import list_backends, get_backend
+
+backends = list_backends()  # Will include IBM backends
+backend = get_backend("ibm_qasm_simulator")  # Or specific IBM backend
+```
+
+**Getting an IBM Quantum Token:**
+
+1. Create an account at [IBM Quantum](https://quantum.ibm.com/)
+2. Go to Account > My Tokens
+3. Copy your API token
+
+**Environment Variable for MCP Server:**
+
+When running as an MCP server, set the environment variable before starting:
+
+```bash
+export IBM_QUANTUM_TOKEN="your_token"
+mcp-qiskit
+```
+
+Or in your MCP client configuration:
+
+```json
+{
+  "mcpServers": {
+    "mcp-qiskit": {
+      "command": "mcp-qiskit",
+      "env": {
+        "IBM_QUANTUM_TOKEN": "your_token_here"
+      }
+    }
+  }
+}
+```
+
 ### Backend Not Found
 
 If you get "Backend not found", ensure the backend name is correct:
