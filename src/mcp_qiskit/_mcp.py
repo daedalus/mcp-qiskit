@@ -11,6 +11,7 @@ from ._backend import (
 )
 from ._circuit import (
     add_gate,
+    add_gates,
     add_measurement,
     create_quantum_circuit,
     draw_circuit,
@@ -127,6 +128,41 @@ def add_measurement_tool(
     if qubits is None:
         raise ValueError("qubits is required")
     return add_measurement(circuit, qubits, clbits)
+
+
+@mcp.tool()
+def add_gates_tool(
+    circuit: dict[str, Any] | None = None,
+    gates: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Add multiple quantum gates to a circuit in a single call.
+
+    This tool maintains circuit state between calls and allows batch insertion of gates,
+    reducing the number of tool calls needed to build a circuit.
+
+    Args:
+        circuit: Dictionary representation of the quantum circuit. If None, creates
+            a new circuit with 8 qubits and 8 classical bits.
+        gates: List of gate specifications, each containing:
+            - gate (str): Name of the gate (e.g., 'h', 'x', 'cx', 'rz').
+            - qubits (list[int]): List of qubit indices to apply the gate to.
+            - params (list[float], optional): Parameters for parameterized gates.
+
+    Returns:
+        Updated dictionary representation of the quantum circuit with all gates added.
+
+    Example:
+        # Add multiple gates in one call:
+        >>> gates = [
+        ...     {'gate': 'h', 'qubits': [0]},
+        ...     {'gate': 'cx', 'qubits': [0, 1]},
+        ...     {'gate': 'x', 'qubits': [1]}
+        ... ]
+        >>> circuit = add_gates_tool(circuit=None, gates=gates)
+    """
+    if gates is None:
+        raise ValueError("gates is required")
+    return add_gates(circuit, gates)
 
 
 @mcp.tool()

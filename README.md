@@ -63,7 +63,7 @@ pip install -e ".[all]"
 ### As a Python Library
 
 ```python
-from mcp_qiskit import create_quantum_circuit, add_gate, add_measurement, run_circuit
+from mcp_qiskit import create_quantum_circuit, add_gate, add_gates, add_measurement, run_circuit
 
 # Create a 2-qubit circuit with 2 classical bits
 circuit = create_quantum_circuit(2, 2)
@@ -73,6 +73,12 @@ circuit = add_gate(circuit, "h", [0])
 
 # Apply CNOT gate (control: qubit 0, target: qubit 1)
 circuit = add_gate(circuit, "cx", [0, 1])
+
+# Or add multiple gates at once with add_gates
+circuit = add_gates(circuit, [
+    {"gate": "h", "qubits": [0]},
+    {"gate": "cx", "qubits": [0, 1]},
+])
 
 # Measure all qubits
 circuit = add_measurement(circuit, [0, 1])
@@ -184,6 +190,32 @@ circuit = add_gate_tool(circuit, "h", [0, 1, 2, 3])
 
 # Apply X gate to qubits 4, 5, 6, 7 simultaneously  
 circuit = add_gate_tool(circuit, "x", [4, 5, 6, 7])
+```
+
+#### add_gates_tool
+
+Adds multiple quantum gates to a circuit in a single call. **This tool maintains circuit state between calls and reduces the number of tool calls needed.**
+
+**Parameters:**
+- `circuit` (dict, optional): The circuit to modify. If None, creates a new 8-qubit circuit with 8 classical bits automatically.
+- `gates` (list[dict]): List of gate specifications, each containing:
+  - `gate` (str): Name of the gate (e.g., "h", "x", "cx", "rx")
+  - `qubits` (list[int]): Qubit indices to apply the gate to
+  - `params` (list[float], optional): Parameters for parameterized gates
+
+**Example:**
+```python
+# Add multiple gates in one call (reduces tool calls)
+gates = [
+    {"gate": "h", "qubits": [0]},
+    {"gate": "cx", "qubits": [0, 1]},
+    {"gate": "x", "qubits": [2]},
+]
+circuit = add_gates_tool(circuit=None, gates=gates)
+
+# Can be chained to maintain state
+circuit = add_gates_tool(None, [{"gate": "h", "qubits": [0, 1]}])
+circuit = add_gates_tool(circuit, [{"gate": "rz", "qubits": [0], "params": [0.5]}])
 ```
 
 #### add_measurement_tool

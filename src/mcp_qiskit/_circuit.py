@@ -190,6 +190,114 @@ def add_gate(
     return _circuit_to_dict(qc)
 
 
+def add_gates(
+    circuit: dict[str, Any] | None,
+    gates: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Add multiple quantum gates to a circuit in a single call.
+
+    Args:
+        circuit: Dictionary representation of the quantum circuit. If None, a new
+            circuit with 8 qubits and 8 classical bits is created automatically.
+        gates: List of gate specifications. Each specification is a dict with:
+            - "gate": str - Name of the gate (e.g., 'h', 'x', 'cx', 'rz')
+            - "qubits": list[int] - Qubit indices to apply the gate to
+            - "params": list[float], optional - Parameters for parameterized gates
+
+    Returns:
+        Updated dictionary representation of the quantum circuit.
+
+    Example:
+        >>> circuit = create_quantum_circuit(4, 4)
+        >>> circuit = add_gates(circuit, [
+        ...     {"gate": "h", "qubits": [0, 1, 2, 3]},
+        ...     {"gate": "cx", "qubits": [0, 1]},
+        ...     {"gate": "cx", "qubits": [2, 3]},
+        ...     {"gate": "rz", "qubits": [0], "params": [0.5]},
+        ... ])
+
+        # Auto-create new circuit:
+        >>> circuit = add_gates(None, [
+        ...     {"gate": "h", "qubits": [0, 1]},
+        ...     {"gate": "x", "qubits": [2, 3]},
+        ... ])
+    """
+    if circuit is None:
+        circuit = create_quantum_circuit(8, 8)
+
+    qc = _dict_to_circuit(circuit)
+
+    for gate_spec in gates:
+        gate_name = gate_spec.get("gate") or gate_spec.get("name")
+        qubits = gate_spec.get("qubits")
+        params = gate_spec.get("params")
+
+        if not gate_name:
+            raise ValueError("Each gate must have a 'gate' or 'name' field")
+        if not qubits:
+            raise ValueError(f"Gate '{gate_name}' must have 'qubits' field")
+
+        if len(qubits) == 0:
+            raise ValueError(
+                f"Gate '{gate_name}': at least one qubit must be specified"
+            )
+
+        max_qubit = max(qubits)
+        if max_qubit >= qc.num_qubits:
+            raise IndexError(
+                f"Gate '{gate_name}': qubit index {max_qubit} out of range "
+                f"for circuit with {qc.num_qubits} qubits"
+            )
+
+        if isinstance(params, list) and len(params) == 1 and params[0] == "null":
+            params = None
+
+        if gate_name == "measure":
+            if params:
+                clbits = [int(p) for p in params]
+            else:
+                clbits = list(range(len(qubits)))
+            for q, c in zip(qubits, clbits):
+                qc.measure(q, c)
+        elif gate_name == "barrier":
+            qc.barrier(*qubits)
+        elif gate_name == "reset":
+            qc.reset(*qubits)
+        elif gate_name in ("mcx", "mct"):
+            if len(qubits) < 2:
+                raise ValueError(
+                    f"Gate '{gate_name}': MCX requires at least 2 qubits, got {len(qubits)}"
+                )
+            control_qubits = qubits[:-1]
+            target_qubit = qubits[-1]
+            qc.mcx(control_qubits, target_qubit)
+        else:
+            gate_cls = _get_gate_class(gate_name)
+            if gate_cls is None:
+                available_gates = list_available_gates()
+                raise ValueError(
+                    f"Unknown gate '{gate_name}'. Available gates: {available_gates}"
+                )
+
+            if not params:
+                num_params_needed = _get_gate_params_count(gate_name)
+                if num_params_needed > 0:
+                    params = _get_default_params(gate_name, num_params_needed)
+
+            if params:
+                gate = gate_cls(*params)
+            else:
+                gate = gate_cls()
+
+            if gate.num_qubits == 1 and len(qubits) > 1:
+                for q in qubits:
+                    qc.append(gate, [q])
+            else:
+                qc.append(gate, qubits)
+
+    return _circuit_to_dict(qc)
+
+
 def _get_gate_params_count(gate_name: str) -> int:
     """Get the number of parameters required for a gate."""
     param_counts = {

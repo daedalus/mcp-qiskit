@@ -4,6 +4,7 @@ import pytest
 
 from mcp_qiskit._circuit import (
     add_gate,
+    add_gates,
     add_measurement,
     create_quantum_circuit,
     draw_circuit,
@@ -579,3 +580,69 @@ class TestDrawCircuit:
         circuit = create_quantum_circuit(2, 2)
         with pytest.raises(ValueError, match="Unknown output format"):
             draw_circuit(circuit, "invalid")
+
+
+class TestAddGates:
+    """Tests for add_gates function."""
+
+    def test_add_gates_basic(self) -> None:
+        """Test adding multiple gates at once."""
+        circuit = create_quantum_circuit(2, 0)
+        gates = [
+            {"gate": "h", "qubits": [0]},
+            {"gate": "cx", "qubits": [0, 1]},
+        ]
+        result = add_gates(circuit, gates)
+        assert len(result["operations"]) == 2
+
+    def test_add_gates_with_none_circuit(self) -> None:
+        """Test add_gates with None circuit."""
+        gates = [
+            {"gate": "h", "qubits": [0]},
+            {"gate": "x", "qubits": [1]},
+        ]
+        result = add_gates(None, gates)
+        assert result["num_qubits"] == 8
+        assert len(result["operations"]) == 2
+
+    def test_add_gates_empty_list(self) -> None:
+        """Test add_gates with empty list."""
+        circuit = create_quantum_circuit(2, 0)
+        result = add_gates(circuit, [])
+        assert result == circuit
+
+    def test_add_gates_maintains_state(self) -> None:
+        """Test add_gates maintains state between calls."""
+        circuit = add_gates(None, [{"gate": "h", "qubits": [0]}])
+        circuit = add_gates(circuit, [{"gate": "x", "qubits": [1]}])
+        assert len(circuit["operations"]) == 2
+
+    def test_add_gates_with_params(self) -> None:
+        """Test add_gates with parameterized gates."""
+        circuit = create_quantum_circuit(2, 0)
+        gates = [
+            {"gate": "rx", "qubits": [0], "params": [0.5]},
+            {"gate": "rz", "qubits": [1], "params": [1.2]},
+        ]
+        result = add_gates(circuit, gates)
+        assert len(result["operations"]) == 2
+
+    def test_add_gates_multi_qubit_single_gate(self) -> None:
+        """Test adding single-qubit gate to multiple qubits."""
+        circuit = create_quantum_circuit(4, 0)
+        gates = [
+            {"gate": "h", "qubits": [0, 1, 2, 3]},
+        ]
+        result = add_gates(circuit, gates)
+        assert len(result["operations"]) == 4
+
+    def test_add_gates_requires_gates(self) -> None:
+        """Test that gates parameter is required."""
+        with pytest.raises(TypeError):
+            add_gates(None, None)
+
+    def test_add_gates_invalid_gate_name(self) -> None:
+        """Test add_gates with invalid gate name."""
+        gates = [{"gate": "invalid_gate", "qubits": [0]}]
+        with pytest.raises(ValueError, match="Unknown gate"):
+            add_gates(None, gates)
