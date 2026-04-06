@@ -177,7 +177,6 @@ def get_backend_configuration(backend_name: str) -> dict[str, Any]:
 
     try:
         if backend_name == "aer_simulator":
-
             return {
                 "name": "aer_simulator",
                 "num_qubits": 128,
@@ -204,7 +203,6 @@ def get_backend_configuration(backend_name: str) -> dict[str, Any]:
                 "max_shots": 100000,
             }
         elif backend_name == "qasm_simulator":
-
             return {
                 "name": "qasm_simulator",
                 "num_qubits": 128,

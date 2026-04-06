@@ -50,51 +50,82 @@ def create_quantum_circuit_tool(
 
 @mcp.tool()
 def add_gate_tool(
-    circuit: dict[str, Any],
-    gate_name: str,
-    qubits: list[int],
+    circuit: dict[str, Any] | None = None,
+    gate_name: str | None = None,
+    qubits: list[int] | None = None,
     params: list[float] | None = None,
 ) -> dict[str, Any]:
     """Add a quantum gate to a circuit.
 
+    This tool maintains circuit state between calls. Pass the circuit returned by
+    previous calls to append new gates. If no circuit is provided, a new 8-qubit
+    circuit with 8 classical bits is created automatically.
+
     Args:
-        circuit: Dictionary representation of the quantum circuit.
+        circuit: Dictionary representation of the quantum circuit. If None, creates
+            a new circuit with 8 qubits and 8 classical bits.
         gate_name: Name of the gate to add (e.g., 'h', 'x', 'cx', 'rz', 'u').
-        qubits: List of qubit indices to apply the gate to.
+        qubits: List of qubit indices to apply the gate to. Can be a single qubit
+            (e.g., [0]) or multiple qubits (e.g., [0, 1, 2, 3]). When multiple qubits
+            are specified for a single-qubit gate, the gate is applied to each qubit.
         params: Optional list of parameters for parameterized gates.
 
     Returns:
-        Updated dictionary representation of the quantum circuit.
+        Updated dictionary representation of the quantum circuit. Always include this
+        returned circuit in subsequent calls to maintain state.
 
     Example:
-        >>> circuit = create_quantum_circuit_tool(2, 0)
-        >>> circuit = add_gate_tool(circuit, 'h', [0])
+        # Create new circuit and add gates (maintaining state):
+        >>> circuit = add_gate_tool(circuit=None, gate_name='h', qubits=[0])
+        >>> circuit = add_gate_tool(circuit=circuit, gate_name='x', qubits=[1])
+
+        # Apply single-qubit gate to multiple qubits at once:
+        >>> circuit = add_gate_tool(circuit, 'h', [0, 1, 2, 3])  # Applies H to q0, q1, q2, q3
+
+        # Or use the pattern from previous calls:
+        >>> circuit = add_gate_tool(None, 'h', [0])
         >>> circuit = add_gate_tool(circuit, 'cx', [0, 1])
     """
+    if gate_name is None:
+        raise ValueError("gate_name is required")
+    if qubits is None:
+        raise ValueError("qubits is required")
     return add_gate(circuit, gate_name, qubits, params)
 
 
 @mcp.tool()
 def add_measurement_tool(
-    circuit: dict[str, Any],
-    qubits: list[int],
+    circuit: dict[str, Any] | None = None,
+    qubits: list[int] | None = None,
     clbits: list[int] | None = None,
 ) -> dict[str, Any]:
     """Add measurement operations to a circuit.
 
+    This tool maintains circuit state between calls. Pass the circuit returned by
+    previous calls to append measurements. If no circuit is provided, a new 8-qubit
+    circuit with 8 classical bits is created automatically.
+
     Args:
-        circuit: Dictionary representation of the quantum circuit.
+        circuit: Dictionary representation of the quantum circuit. If None, creates
+            a new circuit with 8 qubits and 8 classical bits.
         qubits: List of qubit indices to measure.
         clbits: List of classical bit indices to store results.
 
     Returns:
-        Updated dictionary representation of the quantum circuit.
+        Updated dictionary representation of the quantum circuit. Always include this
+        returned circuit in subsequent calls to maintain state.
 
     Example:
-        >>> circuit = create_quantum_circuit_tool(2, 2)
-        >>> circuit = add_gate_tool(circuit, 'h', [0])
+        # Maintain state between calls:
+        >>> circuit = add_measurement_tool(circuit=None, qubits=[0, 1])
+        >>> circuit = add_measurement_tool(circuit=circuit, qubits=[2])
+
+        # Or use the pattern from previous calls:
+        >>> circuit = add_measurement_tool(None, [0, 1])
         >>> circuit = add_measurement_tool(circuit, [0, 1])
     """
+    if qubits is None:
+        raise ValueError("qubits is required")
     return add_measurement(circuit, qubits, clbits)
 
 

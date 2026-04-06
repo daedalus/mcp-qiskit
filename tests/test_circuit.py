@@ -50,6 +50,23 @@ class TestAddGate:
         result = add_gate(circuit, "h", [0])
         assert "operations" in result
 
+    def test_add_gate_none_circuit_creates_new(self) -> None:
+        """Test that passing None creates a new circuit."""
+        result = add_gate(None, "h", [0])
+        assert result["num_qubits"] == 8
+        assert result["num_clbits"] == 8
+        assert len(result["operations"]) == 1
+        assert result["operations"][0]["name"] == "h"
+
+    def test_add_gate_none_then_append(self) -> None:
+        """Test state maintenance when passing None then circuit."""
+        circuit = add_gate(None, "h", [0])
+        assert len(circuit["operations"]) == 1
+        circuit = add_gate(circuit, "x", [1])
+        assert len(circuit["operations"]) == 2
+        assert circuit["operations"][0]["name"] == "h"
+        assert circuit["operations"][1]["name"] == "x"
+
     def test_add_cx_gate(self) -> None:
         """Test adding CX (CNOT) gate to circuit."""
         circuit = create_quantum_circuit(2, 0)
@@ -248,6 +265,120 @@ class TestAddSpecializedGates:
         result = add_gate(circuit, "swap", [0, 1])
         assert len(result["operations"]) == 1
 
+    def test_add_sdg(self) -> None:
+        """Test adding SDG gate."""
+        circuit = create_quantum_circuit(1, 0)
+        result = add_gate(circuit, "sdg", [0])
+        assert len(result["operations"]) == 1
+
+    def test_add_tdg(self) -> None:
+        """Test adding TDG gate."""
+        circuit = create_quantum_circuit(1, 0)
+        result = add_gate(circuit, "tdg", [0])
+        assert len(result["operations"]) == 1
+
+    def test_add_cy(self) -> None:
+        """Test adding CY gate."""
+        circuit = create_quantum_circuit(2, 0)
+        result = add_gate(circuit, "cy", [0, 1])
+        assert len(result["operations"]) == 1
+
+    def test_add_cz(self) -> None:
+        """Test adding CZ gate."""
+        circuit = create_quantum_circuit(2, 0)
+        result = add_gate(circuit, "cz", [0, 1])
+        assert len(result["operations"]) == 1
+
+    def test_add_cu(self) -> None:
+        """Test adding CU gate."""
+        circuit = create_quantum_circuit(2, 0)
+        result = add_gate(circuit, "cu", [0, 1], [0.1, 0.2, 0.3, 0.4])
+        assert len(result["operations"]) == 1
+
+    def test_add_cu1(self) -> None:
+        """Test adding CU1 gate."""
+        circuit = create_quantum_circuit(2, 0)
+        result = add_gate(circuit, "cu1", [0, 1], [0.5])
+        assert len(result["operations"]) == 1
+
+    def test_add_cu3(self) -> None:
+        """Test adding CU3 gate."""
+        circuit = create_quantum_circuit(2, 0)
+        result = add_gate(circuit, "cu3", [0, 1], [0.1, 0.2, 0.3])
+        assert len(result["operations"]) == 1
+
+    def test_add_c3sx(self) -> None:
+        """Test adding C3SX gate."""
+        circuit = create_quantum_circuit(4, 0)
+        result = add_gate(circuit, "c3sx", [0, 1, 2, 3])
+        assert len(result["operations"]) == 1
+
+    def test_add_rzx(self) -> None:
+        """Test adding RZX gate."""
+        circuit = create_quantum_circuit(2, 0)
+        result = add_gate(circuit, "rzx", [0, 1], [0.5])
+        assert len(result["operations"]) == 1
+
+    def test_add_dcx(self) -> None:
+        """Test adding DCX gate."""
+        circuit = create_quantum_circuit(2, 0)
+        result = add_gate(circuit, "dcx", [0, 1])
+        assert len(result["operations"]) == 1
+
+    def test_add_ecr(self) -> None:
+        """Test adding ECR gate."""
+        circuit = create_quantum_circuit(2, 0)
+        result = add_gate(circuit, "ecr", [0, 1])
+        assert len(result["operations"]) == 1
+
+    def test_add_id(self) -> None:
+        """Test adding ID gate."""
+        circuit = create_quantum_circuit(1, 0)
+        result = add_gate(circuit, "id", [0])
+        assert len(result["operations"]) == 1
+
+    def test_add_u2(self) -> None:
+        """Test adding U2 gate."""
+        circuit = create_quantum_circuit(1, 0)
+        result = add_gate(circuit, "u2", [0], [0.1, 0.2])
+        assert len(result["operations"]) == 1
+
+    def test_add_crz(self) -> None:
+        """Test adding CRZ gate."""
+        circuit = create_quantum_circuit(2, 0)
+        result = add_gate(circuit, "crz", [0, 1], [0.5])
+        assert len(result["operations"]) == 1
+
+    def test_add_cry(self) -> None:
+        """Test adding CRY gate."""
+        circuit = create_quantum_circuit(2, 0)
+        result = add_gate(circuit, "cry", [0, 1], [0.5])
+        assert len(result["operations"]) == 1
+
+    def test_add_crx(self) -> None:
+        """Test adding CRX gate."""
+        circuit = create_quantum_circuit(2, 0)
+        result = add_gate(circuit, "crx", [0, 1], [0.5])
+        assert len(result["operations"]) == 1
+
+    def test_add_csx(self) -> None:
+        """Test adding CSX gate."""
+        circuit = create_quantum_circuit(2, 0)
+        result = add_gate(circuit, "csx", [0, 1])
+        assert len(result["operations"]) == 1
+
+    def test_add_c4x(self) -> None:
+        """Test adding C4X gate."""
+        circuit = create_quantum_circuit(5, 0)
+        result = add_gate(circuit, "c4x", [0, 1, 2, 3, 4])
+        assert len(result["operations"]) == 1
+
+    def test_add_rccx(self) -> None:
+        """Test adding RCCX (relative Clifford) gate."""
+        circuit = create_quantum_circuit(3, 0)
+        result = add_gate(circuit, "rccx", [0, 1, 2])
+        assert len(result["operations"]) == 1
+
 
 class TestListAvailableGatesNew:
     """Tests for new gates in list_available_gates."""
@@ -287,6 +418,20 @@ class TestAddMeasurement:
         circuit = create_quantum_circuit(2, 2)
         result = add_measurement(circuit, [0, 1], [1, 0])
         assert "operations" in result
+
+    def test_add_measurement_none_circuit_creates_new(self) -> None:
+        """Test that passing None creates a new circuit."""
+        result = add_measurement(None, [0])
+        assert result["num_qubits"] == 8
+        assert result["num_clbits"] == 8
+        assert len(result["operations"]) == 1
+
+    def test_add_measurement_none_then_append(self) -> None:
+        """Test state maintenance with measurement after gate."""
+        circuit = add_gate(None, "h", [0])
+        assert len(circuit["operations"]) == 1
+        circuit = add_measurement(circuit, [0])
+        assert len(circuit["operations"]) == 2
 
     def test_add_measurement_invalid_qubit(self) -> None:
         """Test measurement with invalid qubit index."""
@@ -416,8 +561,9 @@ class TestDrawCircuit:
     def test_draw_latex(self) -> None:
         """Test drawing circuit in LaTeX format."""
         try:
-            import pylatexenc  # noqa: F401
             import subprocess
+
+            import pylatexenc  # noqa: F401
 
             subprocess.run(["pdftocairo", "-v"], capture_output=True, check=True)
         except (ImportError, FileNotFoundError):

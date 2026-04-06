@@ -206,3 +206,41 @@ class TestTranspileCircuit:
 
         result = transpile_circuit(circuit, basis_gates=["h", "cx", "x", "y", "z"])
         assert "operations" in result
+
+    def test_run_circuit_with_cp_gate(self) -> None:
+        """Test running circuit with CP (controlled phase) gate."""
+        circuit = create_quantum_circuit(2, 2)
+        circuit = add_gate(circuit, "h", [0])
+        circuit = add_gate(circuit, "h", [1])
+        circuit = add_gate(circuit, "cp", [0, 1], [0.5])
+        circuit = add_measurement(circuit, [0, 1])
+
+        result = run_circuit(circuit, "aer_simulator", shots=100)
+        assert result["status"] == "COMPLETED"
+        assert "counts" in result
+
+    def test_run_circuit_three_qubits(self) -> None:
+        """Test running 3-qubit circuit."""
+        circuit = create_quantum_circuit(3, 3)
+        circuit = add_gate(circuit, "h", [0])
+        circuit = add_gate(circuit, "h", [1])
+        circuit = add_gate(circuit, "h", [2])
+        circuit = add_measurement(circuit, [0, 1, 2])
+
+        result = run_circuit(circuit, shots=100)
+        assert result["status"] == "COMPLETED"
+        assert "counts" in result
+
+    def test_run_circuits_batch_with_statevector(self) -> None:
+        """Test batch execution with statevector mode."""
+        circuits = []
+        for _ in range(2):
+            c = create_quantum_circuit(2, 0)
+            c = add_gate(c, "h", [0])
+            c = add_gate(c, "x", [1])
+            circuits.append(c)
+
+        results = run_circuits(circuits, "aer_simulator", shots=None)
+        assert len(results) == 2
+        for r in results:
+            assert "statevector" in r

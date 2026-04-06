@@ -88,7 +88,7 @@ def create_quantum_circuit(num_qubits: int, num_classical_bits: int) -> dict[str
 
 
 def add_gate(
-    circuit: dict[str, Any],
+    circuit: dict[str, Any] | None,
     gate_name: str,
     qubits: list[int],
     params: list[float] | None = None,
@@ -96,19 +96,33 @@ def add_gate(
     """Add a quantum gate to a circuit.
 
     Args:
-        circuit: Dictionary representation of the quantum circuit.
+        circuit: Dictionary representation of the quantum circuit. If None, a new
+            circuit with 8 qubits and 8 classical bits is created automatically.
         gate_name: Name of the gate to add (e.g., 'h', 'x', 'cx', 'rz', 'u').
-        qubits: List of qubit indices to apply the gate to.
+        qubits: List of qubit indices to apply the gate to. Can be a single qubit
+            (e.g., [0]) or multiple qubits (e.g., [0, 1, 2, 3]). When multiple qubits
+            are specified for a single-qubit gate, the gate is applied to each qubit.
         params: Optional list of parameters for parameterized gates.
 
     Returns:
         Updated dictionary representation of the quantum circuit.
 
     Example:
+        # Create new circuit and add gates:
         >>> circuit = create_quantum_circuit(2, 0)
-        >>> add_gate(circuit, 'h', [0])
-        >>> add_gate(circuit, 'cx', [0, 1])
+        >>> circuit = add_gate(circuit, 'h', [0])
+        >>> circuit = add_gate(circuit, 'cx', [0, 1])
+
+        # Apply single-qubit gate to multiple qubits at once:
+        >>> circuit = add_gate(circuit, 'h', [0, 1, 2, 3])  # Applies H to q0, q1, q2, q3
+
+        # Or use None to create a new circuit automatically:
+        >>> circuit = add_gate(None, 'h', [0])  # Creates new 8-qubit circuit
+        >>> circuit = add_gate(circuit, 'x', [0])  # Appends to existing
     """
+    if circuit is None:
+        circuit = create_quantum_circuit(8, 8)
+
     qc = _dict_to_circuit(circuit)
 
     if len(qubits) == 0:
@@ -164,7 +178,14 @@ def add_gate(
             gate = gate_cls(*params)
         else:
             gate = gate_cls()
-        qc.append(gate, qubits)
+
+        # Handle multi-qubit application of single-qubit gates
+        # When a single-qubit gate is applied to multiple qubits, apply to each
+        if gate.num_qubits == 1 and len(qubits) > 1:
+            for q in qubits:
+                qc.append(gate, [q])
+        else:
+            qc.append(gate, qubits)
 
     return _circuit_to_dict(qc)
 
@@ -197,7 +218,7 @@ def _get_gate_params_count(gate_name: str) -> int:
     return param_counts.get(gate_name, 0)
 
 
-def _get_default_params(gate_name: str, num_params: int) -> list[float]:
+def _get_default_params(_gate_name: str, num_params: int) -> list[float]:
     """Get default parameters for a gate when none provided."""
     if num_params == 1:
         return [0.5]  # Common rotation angle
@@ -279,14 +300,15 @@ def _get_gate_class(gate_name: str) -> type | None:
 
 
 def add_measurement(
-    circuit: dict[str, Any],
+    circuit: dict[str, Any] | None,
     qubits: list[int],
     clbits: list[int] | None = None,
 ) -> dict[str, Any]:
     """Add measurement operations to a circuit.
 
     Args:
-        circuit: Dictionary representation of the quantum circuit.
+        circuit: Dictionary representation of the quantum circuit. If None, a new
+            circuit with 8 qubits and 8 classical bits is created automatically.
         qubits: List of qubit indices to measure.
         clbits: List of classical bit indices to store results. If None, uses sequential indices.
 
@@ -297,7 +319,14 @@ def add_measurement(
         >>> circuit = create_quantum_circuit(2, 2)
         >>> add_gate(circuit, 'h', [0])
         >>> add_measurement(circuit, [0, 1])
+
+        # Or use None to create a new circuit automatically:
+        >>> circuit = add_measurement(None, [0, 1])  # Creates new 8-qubit circuit
+        >>> circuit = add_measurement(circuit, [0])  # Appends to existing
     """
+    if circuit is None:
+        circuit = create_quantum_circuit(8, 8)
+
     qc = _dict_to_circuit(circuit)
 
     if not qubits:
