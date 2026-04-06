@@ -12,11 +12,13 @@ license = {text = "MIT"}
 authors = [
     {name = "Dario Clavijo", email = "clavijodario@gmail.com"}
 ]
-dependencies = []
+dependencies = [
+    "qiskit==2.3.1",
+    "qiskit-ibm-runtime>=0.33.0",
+]
 
 [project.optional-dependencies]
 mcp = ["fastmcp>=2.0"]
-qiskit = ["qiskit==2.3.1", "qiskit-ibm-runtime>=0.33.0"]
 test = [
     "pytest",
     "pytest-cov",
@@ -33,7 +35,7 @@ lint = [
     "ruff",
     "mypy",
 ]
-all = ["mcp-qiskit[mcp,qiskit,dev,test,lint]"]
+all = ["mcp-qiskit[mcp,dev,test,lint]"]
 
 [project.scripts]
 mcp-qiskit = "mcp_qiskit.__main__:main"
