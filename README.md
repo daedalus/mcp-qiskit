@@ -158,6 +158,8 @@ Adds a quantum gate to a circuit.
 - Single-qubit: `h`, `x`, `y`, `z`, `s`, `t`, `sdg`, `tdg`, `i`, `id`
 - Parameterized: `rx`, `ry`, `rz`, `u1`, `u2`, `u3`, `p`
 - Multi-qubit: `cx`, `cy`, `cz`, `swap`
+- Multi-controlled: `mcx`, `mct`, `mcp`, `ccx`, `toffoli`, `c3x`, `c3sx`, `c4x`
+- Specialized: `rxx`, `ryy`, `rzz`, `ch`, `cswap`, `cu`, `crx`, `cry`, `crz`
 
 **Example:**
 ```python
@@ -418,6 +420,53 @@ print(f"Available gates: {len(gates)}")
 ascii_output = draw_circuit(circuit, "ascii")
 print(ascii_output)
 ```
+
+### Run Shor's Algorithm
+
+```python
+from mcp_qiskit import (
+    create_quantum_circuit,
+    add_gate,
+    add_measurement,
+    run_circuit,
+)
+
+def build_shor_circuit(N=15, a=2, n_count=8):
+    """Build Shor's factoring circuit for N=15 using MCX gates."""
+    n = N.bit_length()
+    circuit = create_quantum_circuit(n_count + n, n_count)
+    
+    # Superposition on first register
+    for i in range(n_count):
+        circuit = add_gate(circuit, "h", [i])
+    
+    # Initialize second register to |1>
+    circuit = add_gate(circuit, "x", [n_count])
+    
+    # Controlled modular exponentiation using MCX
+    for i in range(n_count):
+        power = pow(a, 2**i, N)
+        for j in range(n):
+            if (power >> j) & 1:
+                circuit = add_gate(circuit, "mcx", [[i], [n_count + j]])
+    
+    # Inverse QFT (simplified)
+    for i in range(n_count - 1, -1, -1):
+        for j in range(i + 1, n_count):
+            circuit = add_gate(circuit, "cp", [i, j], [3.14159 / (2 ** (j - i))])
+        circuit = add_gate(circuit, "h", [i])
+    
+    # Measure first register
+    circuit = add_measurement(circuit, list(range(n_count)))
+    return circuit
+
+# Run Shor's algorithm to factor 15
+circuit = build_shor_circuit(N=15, a=2, n_count=8)
+result = run_circuit(circuit, "aer_simulator", shots=1000)
+print(f"Results: {result['counts']}")
+```
+
+See `examples/shor_example.py` for a complete implementation with factor extraction.
 
 ## Architecture
 
