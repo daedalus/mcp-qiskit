@@ -120,7 +120,9 @@ def add_gate(
             f"Qubit index {max_qubit} out of range for circuit with {qc.num_qubits} qubits"
         )
 
-    params = params or []
+    # Handle JSON "null" being serialized as string "null"
+    if isinstance(params, list) and len(params) == 1 and params[0] == "null":
+        params = None
 
     if gate_name == "measure":
         if params:
@@ -152,6 +154,12 @@ def add_gate(
                 f"Unknown gate '{gate_name}'. Available gates: {available_gates}"
             )
 
+        # Use default params if none provided for parameterized gates
+        if not params:
+            num_params_needed = _get_gate_params_count(gate_name)
+            if num_params_needed > 0:
+                params = _get_default_params(gate_name, num_params_needed)
+
         if params:
             gate = gate_cls(*params)
         else:
@@ -159,6 +167,47 @@ def add_gate(
         qc.append(gate, qubits)
 
     return _circuit_to_dict(qc)
+
+
+def _get_gate_params_count(gate_name: str) -> int:
+    """Get the number of parameters required for a gate."""
+    param_counts = {
+        # Single-parameter gates
+        "rx": 1,
+        "ry": 1,
+        "rz": 1,
+        "u1": 1,
+        "p": 1,
+        "cp": 1,
+        "rxx": 1,
+        "ryy": 1,
+        "rzz": 1,
+        "crx": 1,
+        "cry": 1,
+        "crz": 1,
+        "cu1": 1,
+        # Two-parameter gates
+        "u2": 2,
+        # Three-parameter gates
+        "u3": 3,
+        "cu3": 3,
+        # Four-parameter gates
+        "cu": 4,
+    }
+    return param_counts.get(gate_name, 0)
+
+
+def _get_default_params(gate_name: str, num_params: int) -> list[float]:
+    """Get default parameters for a gate when none provided."""
+    if num_params == 1:
+        return [0.5]  # Common rotation angle
+    elif num_params == 2:
+        return [0.0, 0.0]
+    elif num_params == 3:
+        return [0.0, 0.0, 0.0]
+    elif num_params == 4:
+        return [0.0, 0.0, 0.0, 0.0]
+    return []
 
 
 def _get_gate_class(gate_name: str) -> type | None:
@@ -187,17 +236,14 @@ def _get_gate_class(gate_name: str) -> type | None:
         "u3": "U3Gate",
         "p": "PhaseGate",
         "cp": "CPhaseGate",
-        # Multi-controlled gates (needed for Shor's algorithm)
         "mcx": "MCXGate",
         "mct": "MCXGate",
         "mcp": "MCPhaseGate",
-        # Toffoli gates
         "ccx": "CCXGate",
         "toffoli": "CCXGate",
         "c3x": "C3XGate",
         "c3sx": "C3SXGate",
         "c4x": "C4XGate",
-        # Specialized gates
         "rccx": "RCCXGate",
         "rc3x": "RC3XGate",
         "ch": "CHGate",
@@ -222,7 +268,7 @@ def _get_gate_class(gate_name: str) -> type | None:
 
     if gate_name in gate_mappings:
         class_name = gate_mappings[gate_name]
-        return getattr(qiskit.circuit.library, class_name)  # type: ignore[no-any-return]
+        return getattr(qiskit.circuit.library, class_name)
 
     if hasattr(qiskit.circuit.library, gate_name):
         attr = getattr(qiskit.circuit.library, gate_name)
