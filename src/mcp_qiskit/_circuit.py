@@ -135,6 +135,15 @@ def add_gate(
         qc.barrier(*qubits)
     elif gate_name == "reset":
         qc.reset(*qubits)
+    elif gate_name in ("mcx", "mct"):
+        # Multi-controlled X gate: last qubit is target, rest are controls
+        if len(qubits) < 2:
+            raise ValueError(
+                f"MCX requires at least 2 qubits (controls + target), got {len(qubits)}"
+            )
+        control_qubits = qubits[:-1]
+        target_qubit = qubits[-1]
+        qc.mcx(control_qubits, target_qubit)
     else:
         gate_cls = _get_gate_class(gate_name)
         if gate_cls is None:
@@ -167,6 +176,7 @@ def _get_gate_class(gate_name: str) -> type | None:
         "cy": "CYGate",
         "cz": "CZGate",
         "swap": "SwapGate",
+        "cswap": "CSwapGate",
         "i": "IGate",
         "id": "IGate",
         "rx": "RXGate",
@@ -177,6 +187,37 @@ def _get_gate_class(gate_name: str) -> type | None:
         "u3": "U3Gate",
         "p": "PhaseGate",
         "cp": "CPhaseGate",
+        # Multi-controlled gates (needed for Shor's algorithm)
+        "mcx": "MCXGate",
+        "mct": "MCXGate",
+        "mcp": "MCPhaseGate",
+        # Toffoli gates
+        "ccx": "CCXGate",
+        "toffoli": "CCXGate",
+        "c3x": "CC3XGate",
+        "c3sx": "CC3SXGate",
+        "c4x": "C4XGate",
+        # Specialized gates
+        "rccx": "RCCXGate",
+        "rc3x": "RC3XGate",
+        "ch": "CHGate",
+        "csx": "CSXGate",
+        "cu": "CUGate",
+        "cu1": "CU1Gate",
+        "cu3": "CU3Gate",
+        "crx": "CRXGate",
+        "cry": "CRYGate",
+        "crz": "CRZGate",
+        "rxx": "RXXGate",
+        "ryy": "RYYGate",
+        "rzz": "RZZGate",
+        "rzx": "RZXGate",
+        "dcx": "DCXGate",
+        "ecr": "ECRGate",
+        "xx_minus_yz": "XXMinusYYGate",
+        "xx_plus_yz": "XXPlusYYGate",
+        "psix": "PSixGate",
+        "ms": "MSGate",
     }
 
     if gate_name in gate_mappings:
@@ -284,6 +325,7 @@ def list_available_gates() -> list[str]:
         "cu1",
         "cu3",
         "ccx",
+        "toffoli",
         "ccz",
         "u1",
         "u2",
@@ -318,6 +360,10 @@ def list_available_gates() -> list[str]:
         "xx_minus_yz",
         "xx_plus_yz",
         "z",
+        # Multi-controlled gates (essential for Shor's algorithm)
+        "mcx",
+        "mct",
+        "mcp",
     ]
 
 

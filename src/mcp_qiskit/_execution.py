@@ -62,8 +62,19 @@ def run_circuit(
         else:
             job = backend.run(qc, shots=shots, seed=seed if seed else 42)
             result = job.result()
-            counts = result.get_counts(qc)
-            result_data = {"counts": counts}
+
+            # Check if circuit has measurements
+            has_measurements = any(inst.operation.name == "measure" for inst in qc.data)
+
+            if has_measurements:
+                counts = result.get_counts(qc)
+                result_data = {"counts": counts}
+            else:
+                # Return statevector for circuits without measurements
+                from qiskit.quantum_info import Statevector
+
+                state = Statevector(qc)
+                result_data = {"statevector": state.data.tolist()}
 
             if hasattr(result, "time_taken"):
                 result_data["time_taken"] = result.time_taken
