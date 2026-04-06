@@ -146,12 +146,12 @@ circuit = create_quantum_circuit_tool(num_qubits=3, num_classical_bits=3)
 
 #### add_gate_tool
 
-Adds a quantum gate to a circuit.
+Adds a quantum gate to a circuit. **This tool maintains circuit state between calls.**
 
 **Parameters:**
-- `circuit` (dict): The circuit to modify
+- `circuit` (dict, optional): The circuit to modify. If None, creates a new 8-qubit circuit with 8 classical bits automatically.
 - `gate_name` (str): Name of the gate (e.g., "h", "x", "cx", "rx")
-- `qubits` (list[int]): List of qubit indices to apply the gate to
+- `qubits` (list[int]): List of qubit indices to apply the gate to. Can be a single qubit (e.g., `[0]`) or multiple qubits (e.g., `[0, 1, 2, 3]`). When multiple qubits are specified for a single-qubit gate, the gate is applied to each qubit.
 - `params` (list[float], optional): Parameters for parameterized gates
 
 **Supported Gates:**
@@ -161,25 +161,48 @@ Adds a quantum gate to a circuit.
 - Multi-controlled: `mcx`, `mct`, `mcp`, `ccx`, `toffoli`, `c3x`, `c3sx`, `c4x`
 - Specialized: `rxx`, `ryy`, `rzz`, `ch`, `cswap`, `cu`, `crx`, `cry`, `crz`
 
-**Example:**
+**State Maintenance Pattern:**
+Always pass the circuit returned by the previous call to maintain state:
+
 ```python
-circuit = add_gate_tool(circuit, "h", [0])           # Hadamard on qubit 0
-circuit = add_gate_tool(circuit, "cx", [0, 1])       # CNOT from 0 to 1
-circuit = add_gate_tool(circuit, "rx", [0], [0.5])  # RX with parameter
+# Option 1: Pass circuit explicitly
+circuit = add_gate_tool(circuit=None, gate_name="h", qubits=[0])  # Creates new circuit
+circuit = add_gate_tool(circuit=circuit, gate_name="x", qubits=[1])  # Appends
+
+# Option 2: Use returned circuit
+circuit = add_gate_tool(None, "h", [0])
+circuit = add_gate_tool(circuit, "cx", [0, 1])
+circuit = add_gate_tool(circuit, "rx", [0], [0.5])
+```
+
+**Apply Single-Quantum Gate to Multiple Qubits:**
+When applying single-qubit gates (like `h`, `x`, `y`, `z`, etc.) to multiple qubits at once, use a list of qubit indices:
+
+```python
+# Apply H gate to qubits 0, 1, 2, 3 simultaneously
+circuit = add_gate_tool(circuit, "h", [0, 1, 2, 3])
+
+# Apply X gate to qubits 4, 5, 6, 7 simultaneously  
+circuit = add_gate_tool(circuit, "x", [4, 5, 6, 7])
 ```
 
 #### add_measurement_tool
 
-Adds measurement operations to qubits.
+Adds measurement operations to qubits. **This tool maintains circuit state between calls.**
 
 **Parameters:**
-- `circuit` (dict): The circuit to modify
+- `circuit` (dict, optional): The circuit to modify. If None, creates a new 8-qubit circuit with 8 classical bits automatically.
 - `qubits` (list[int]): Qubit indices to measure
 - `clbits` (list[int], optional): Classical bit indices to store results
 
 **Example:**
 ```python
-circuit = add_measurement_tool(circuit, [0, 1])           # Measure q0->c0, q1->c1
+# Maintain state between calls
+circuit = add_measurement_tool(circuit=None, qubits=[0, 1])           # Creates new circuit
+circuit = add_measurement_tool(circuit=circuit, qubits=[2])          # Appends measurement
+
+# Or use returned circuit
+circuit = add_measurement_tool(None, [0, 1])           # Measure q0->c0, q1->c1
 circuit = add_measurement_tool(circuit, [0, 1], [1, 0]) # Measure q0->c1, q1->c0
 ```
 
@@ -467,6 +490,48 @@ print(f"Results: {result['counts']}")
 ```
 
 See `examples/shor_example.py` for a complete implementation with factor extraction.
+
+### Shor's Algorithm with MCP Qiskit Tools
+
+Build Shor's algorithm circuit to factor N=15 using the MCP Qiskit server tools:
+
+```python
+# Step 1: Create an 8-qubit circuit with 4 classical bits
+circuit = create_quantum_circuit_tool(num_qubits=8, num_classical_bits=4)
+
+# Step 2: Apply H gates to qubits 0-3 (superposition)
+circuit = add_gate_tool(circuit=circuit, gate_name="h", qubits=[0, 1, 2, 3])
+
+# Step 3: Apply X gates to qubits 4-7 (initialize to |1⟩)
+circuit = add_gate_tool(circuit=circuit, gate_name="x", qubits=[4, 5, 6, 7])
+
+# Step 4: Add modular exponentiation using CP gates
+circuit = add_gate_tool(circuit=circuit, gate_name="cp", qubits=[0, 4], params=[3.14159/2])  # CP(π/2)
+circuit = add_gate_tool(circuit=circuit, gate_name="cp", qubits=[1, 6], params=[3.14159/4])  # CP(π/4)
+circuit = add_gate_tool(circuit=circuit, gate_name="cp", qubits=[2, 4], params=[3.14159])    # CP(π)
+circuit = add_gate_tool(circuit=circuit, gate_name="cp", qubits=[3, 4], params=[3.14159])    # CP(π)
+
+# Step 5: Apply inverse QFT using H and CP gates (reverse order)
+# CP(π/4) on [2,3], CP(π/2) on [1,2], CP(π) on [0,1]
+circuit = add_gate_tool(circuit=circuit, gate_name="cp", qubits=[2, 3], params=[3.14159/4])
+circuit = add_gate_tool(circuit=circuit, gate_name="cp", qubits=[1, 2], params=[3.14159/2])
+circuit = add_gate_tool(circuit=circuit, gate_name="cp", qubits=[0, 1], params=[3.14159])
+# H gates in reverse order
+circuit = add_gate_tool(circuit=circuit, gate_name="h", qubits=[3, 2, 1, 0])
+
+# Step 6: Measure qubits 0-3
+circuit = add_measurement_tool(circuit=circuit, qubits=[0, 1, 2, 3])
+
+# Step 7: Run on aer_simulator
+result = run_circuit_tool(circuit=circuit, backend_name="aer_simulator", shots=1024, seed=42)
+print(f"Measurement results: {result['counts']}")
+
+# Extract factors from the measurement result:
+# 1. Compute the phase from measurement outcome
+# 2. Find order r via continued fractions
+# 3. Calculate gcd(a^(r/2) ± 1, N)
+# Expected: Factorization of 15 = 3 × 5
+```
 
 ## Architecture
 
