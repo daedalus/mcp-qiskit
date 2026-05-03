@@ -5,8 +5,7 @@ MCP server exposing Qiskit 2.3.1 quantum computing functionality through the Mod
 [![PyPI](https://img.shields.io/pypi/v/mcp-qiskit.svg)](https://pypi.org/project/mcp-qiskit/)
 [![Python](https://img.shields.io/pypi/pyversions/mcp-qiskit.svg)](https://pypi.org/project/mcp-qiskit/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![Tests](https://github.com/daedalus/mcp-qiskit/actions/workflows/ci.yml/badge.svg)](https://github.com/daedalus/mcp-qiskit/actions)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/daedalus/mcp-qiskit)
+[![Tests](https://github.com/daedalus/mcp-qiskit/actions/workflows/ci.yml/badge.svg)](https://github.com/daedalus/mcp-qiskit/actions)[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/daedalus/mcp-qiskit)
 
 mcp-name: io.github.daedalus/mcp-qiskit
 
